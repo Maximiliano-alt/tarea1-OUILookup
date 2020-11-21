@@ -24,9 +24,16 @@ def main():
         if opt in ('--help'):
             help()
         elif opt in ('--ip'):
-            ip(arg)
+            if(verificarip(arg)):
+                ip(arg)
+            else:
+                print("ERROR EN ARGUMENTOS")
+
         elif opt in ('--mac'):
-            mac(arg)
+            if(verificarmac(arg)):
+                mac(arg)
+            else:
+                print("\n\tERROR EN ARGUMENTOS\n\t")	
 
 # FUNCION HELP : Muestra el mensaje inicial y sale.
 def help():
@@ -40,7 +47,7 @@ def mac(macAdress):
 		respuesta = requests.get(url)											# se obtiene respuesta de sitio web 
 		if (respuesta.status_code==200):										# si hubo respuesta 
 			contenido = respuesta.content										# se guarda el contenido 
-			file = open("direcciones.txt", "wb")								# se genera un archivo txt 
+			file = open("direcciones.txt", "wb")								# se genera unsdsd archivo txt 
 			file.write(contenido)												# se escribe el contenido en el archivo
 			file.close()
 		pass
@@ -48,7 +55,7 @@ def mac(macAdress):
 	#En caso de que no exista conexion 
 	#Para ejecutar sin conexion se requiere que el archivo de direcciones se encuentre en la misma carpeta que el archivo.py
 	except:	
-		print("\n\tDispositivo sin conexion")
+		print("\n\t404 Not Found.")
 
 	#Se abre el archivo para analizar linea por linea las respectivas direcciones mac.
 	finally:
@@ -56,17 +63,12 @@ def mac(macAdress):
 		encontrada=False
 
 		while(True):
-			dirMac=''
 			linea = file.readline()
 			datos = linea.split("\t")			#Se obtienen los datos de la linea, los cuales se encuentran separados por una tabulacion 
+			dirMac = linea[0:8]
+			macAdress = macAdress.upper()
 
-			if linea.find('/')==17:				#Si en la linea se detecta una direccion MAC completa 
-				dirMac = linea[0:17]			#La direccion MAC tiene un total de 18 caracteres
-
-			if (linea.find('\t')==8):			#Si en la linea detecta una direccion MAC solo de su NetID
-				dirMac = datos[0]				#La direccion son lo datos en la posicion 0 
-
-			if (dirMac==macAdress):				
+			if (dirMac==macAdress[0:8]):				
 					vendor = datos[1:]						#Datos del fabricante se encuentran desde la posicion 1 en adelante
 					print("\n\tMAC address\t:",macAdress)
 					print("\tVendor   \t:",vendor[1])
@@ -87,13 +89,39 @@ def mac(macAdress):
 # se registra dicha direccion MAC para luego utilizar la función MAC para encontrar a su fabricante.
 def ip(dirIp):
 	try:
+		
 		dirMac = get_mac_address(ip = dirIp)
-		dirMac = dirMac.upper()
-		dirMac = dirMac[0:8]
-		mac(dirMac)
+		if not (dirMac == "00:00:00:00:00:00"):
+			mac(dirMac.upper())
+		else:
+			print("\n\t¡Error! ip is outside the host network.\n")
+
 	except:
 		print("\n\t¡Error! ip is outside the host network.\n")
 
+def verificarmac(argv):
+	lista = ["0","1","2","3","4","5","6","7", "8","9","A","B","C", "D", "E", "F",":","a","b","c", "d", "e", "f"]
+	if(len(argv) != 8):
+		
+		return False
+	for i in range(len(argv)):
+		if not argv[i] in lista:
+			
+			return False
+	return True
+def verificarip(argv):
+	
+	
+	if not "." in argv:
+		return False
+	arg = argv.split(".")
+	for i in range(len(arg)):
+		if not (arg[i].isdigit()):
+			return False
+		if not ((0 <= int(arg[i]))and(int(arg[i]) <= 255)):
+			return False
+			
+	return True
 #Esto se utiliza para poder importar este codigo en otro script para utilizar sus funciones.
 if __name__ == '__main__':
 	main()
